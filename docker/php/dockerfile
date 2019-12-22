@@ -1,20 +1,25 @@
 FROM php:7.3-apache
 
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 RUN set -xe && \
+    # configure apache
+    sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf && \
+    sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf && \
+    \
+    # update packages
     apt-get update && \
     apt-get upgrade -y && \
-    apt-get autoremove -y
-
-RUN docker-php-ext-install -j4 bcmath
-RUN docker-php-ext-install -j4 pdo_mysql
-
-# ensure the correct permissions are given to host volume mounts regardless
-# of host system (native docker, docker for mac, docker for windows)
-RUN set -xe && \
+    apt-get autoremove -y && \
+    \
+    # install php extensions
+    docker-php-ext-install -j4 bcmath pdo_mysql && \
+    \
+    # ensure the correct permissions are given to host volume mounts regardless
+    # of host system (native docker, docker for mac, docker for windows)
     groupmod -g 1000 www-data && \
     usermod -u 1000 -g 1000 www-data && \
-    chown -R www-data:www-data /var/www/html/
+    chown -R www-data:www-data /var/www/html/ && \
+    \
+    # cleanup
+    rm -rf /var/lib/apt/lists/*
