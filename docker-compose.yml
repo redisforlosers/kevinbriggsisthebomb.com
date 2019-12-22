@@ -1,0 +1,42 @@
+version: "3.5"
+
+services:
+  php:
+    build: ./docker/php/
+    container_name: kbitb-web
+    hostname: kbitb-web
+    restart: always
+    volumes:
+      - ./src/:/var/www/html/
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html/public
+    depends_on:
+      - db
+    ports:
+      - 80:80
+
+  db:
+    image: "mariadb"
+    container_name: "kbitb-db"
+    hostname: "kbitb-db"
+    volumes:
+      - "./docker/db/:/docker-entrypoint-initdb.d/"
+      - "db:/var/lib/mysql/"
+    environment:
+      MYSQL_DATABASE: "kbitb"
+      MYSQL_ROOT_PASSWORD: "password"
+      MYSQL_USER: "kbitb"
+      MYSQL_PASSWORD: "kbitb"
+    restart: "always"
+
+  kbitb-adminer:
+    image: "adminer"
+    container_name: "kbitb-adminer"
+    hostname: "kbitb-adminer"
+    depends_on:
+      - "db"
+    ports:
+      - "88:8080"
+
+volumes:
+  db:
